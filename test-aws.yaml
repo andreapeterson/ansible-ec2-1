@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Create key pair
+      amazon.aws.ec2_key:
+        name: my_keypair
+        region: us-east-1
+      no_log: true
+      register: aws_ec2_key_pair
+      notify: Save key
+    
+    - name: Start an ec2 instance
+      amazon.aws.ec2_instance:
+        name: "test-instance"
+        instance_type: t2.micro
+        image_id: ami-0c7217cdde317cfec
+        key_name: "my_keypair"
+        security_group: default
+        exact_count: 1
+        region: us-east-1
+        state: running
+        wait: true
+
+  handlers:
+    - name: Save key
+      copy:
+        content: "{{aws_ec2_key_pair.key.private_key}}"
+        dest: ./sample.pem
+
+
